@@ -2,6 +2,7 @@ package Pharmacy;
 
 import java.util.*;
 import java.sql.*;
+import java.io.*;
 
 public class PharmacyManagementSystem {
     static Scanner sc = new Scanner(System.in);
@@ -38,8 +39,8 @@ public class PharmacyManagementSystem {
             System.out.println("5.=>TO Update Medicine Quantity");
             System.out.println("6.=>To Update Expiry Date");
             System.out.println("7.=>To Search Medicine");
-            System.out.println("8.=>To Buy Medicines");
-            System.out.println("9.=>To Generate Bill");
+            System.out.println("8.=>To Buy Medicines  ---- && To generate Bill");
+            // System.out.println("9.=>To Generate Bill");
             System.out.println("0.=><====To Exit====>");
             System.out.println("----------------------------------------------------------------");
             choice = sc.nextInt();
@@ -67,9 +68,8 @@ public class PharmacyManagementSystem {
                     break;
                 case 8:
                     buyMedicine();
-                    break;
-                case 9:
-                    generatebill();
+                    
+                    // generatebill();
                     break;
                 case 0:
                     return;
@@ -77,7 +77,7 @@ public class PharmacyManagementSystem {
                     System.out.println("Invalid choice. Select appropriate choice");
                     break;
             }
-        } while (choice != 0);
+        } while(choice != 0);
     }
 
     static void HashArrayAdd() throws Exception {
@@ -136,6 +136,7 @@ public class PharmacyManagementSystem {
         }
 
         System.out.println("Medicine added successfully");
+        System.out.println("-----------------------------------------------------------");
     }
 
     // Method to remove medicine
@@ -152,6 +153,7 @@ public class PharmacyManagementSystem {
             medicineMap.remove(id);
 
             System.out.println("Medicine removed successfully");
+            System.out.println("-------------------------------------------------------");
         } else {
             System.out.println("Medicine with ID " + id + " not found");
         }
@@ -168,7 +170,7 @@ public class PharmacyManagementSystem {
             System.out.println("Expiry Date: " + med.getExp_date());
             System.out.println("Quantity: " + med.getQuantity());
             System.out.println("Price: " + med.getPrice());
-            System.out.println("-------------------------------");
+            System.out.println("-----------------------------------------");
         }
     }
 
@@ -190,6 +192,7 @@ public class PharmacyManagementSystem {
             Medicine medicine = medicineMap.get(id);
             medicine.setPrice(price);
             System.out.println("Medicine price updated successfully.");
+            System.out.println("-------------------------------------------------------------");
         } else {
             System.out.println("Medicine with ID " + id + " not found");
         }
@@ -213,6 +216,7 @@ public class PharmacyManagementSystem {
             Medicine medicine = medicineMap.get(id);
             medicine.setQuantity(quantity);
             System.out.println("Medicine quantity updated successfully.");
+            System.out.println("-------------------------------------------------------------");
         } else {
             System.out.println("Medicine with ID " + id + " not found");
         }
@@ -242,6 +246,7 @@ public class PharmacyManagementSystem {
             Medicine medicine = medicineMap.get(id);
             medicine.setExp_date(year + "-" + month + "-" + day);
             System.out.println("Medicine expiry date updated successfully");
+            System.out.println("-------------------------------------------------------------");
         } else {
             System.out.println("Medicine with ID " + id + " not found");
         }
@@ -266,12 +271,12 @@ public class PharmacyManagementSystem {
                 System.out.println("Expiry date: " + rs.getDate(4));
                 System.out.println("Quantity: " + rs.getInt(5));
                 System.out.println("Price: " + rs.getDouble(6));
-                System.out.println("-------------------------------");
+                System.out.println("-------------------------------------");
             } while (rs.next());
         }
     }
 
-    static Stack<Medicine> purchasedMedicines = new Stack<>();
+    static StackDataStructure purchasedMedicines = new StackDataStructure(100);
 
     static void buyMedicine() throws Exception {
         sc.nextLine(); // Clear the scanner buffer
@@ -301,6 +306,8 @@ public class PharmacyManagementSystem {
                 purchasedMedicines.push(purchasedMed);
 
                 System.out.println("Medicine purchased successfully");
+                System.out.println("-------------------------------------------------------------");
+                generatebill();
             } else {
                 System.out.println("Insufficient stock. Available quantity: " + medicine.getQuantity());
             }
@@ -310,14 +317,48 @@ public class PharmacyManagementSystem {
     }
 
 
-    static void generatebill() {
+    static void generatebill()throws IOException {
+        System.out.println("--------------Billling Centerr----------------");
+        sc.nextLine();
+        System.out.println("Enter Name of the Customer");
+        String customername = sc.next();
+
+        String customerphoneNumber = "";
+        while (true) {
+            System.out.println("Enter the 10-digit phone number of the customer:");
+            customerphoneNumber = sc.next();
+            if (customerphoneNumber.length() == 10) {
+                break;
+            } else {
+                System.out.println("Invalid phone number. Please enter a 10-digit number.");
+            }
+        }
+
+        System.out.println("Enter the email of the customer:");
+        String customeremail = sc.nextLine();
+
         if (purchasedMedicines.isEmpty()) {
-            System.out.println("No medicines purchased.");
+            System.out.println("No medicines purchased");
             return;
         }
     
         double totalAmount = 0;
-        System.out.println("----- Bill Details -----");
+        System.out.println("--------------------- Bill Generation--------------------------");
+
+        File f=new File(customername+ ".txt");
+        FileWriter fw = new FileWriter(f,true);
+        BufferedWriter bw=new BufferedWriter(fw);
+        bw.write("Name:- "+customername);
+        bw.newLine();
+        bw.write("phone no. :- "+customerphoneNumber);
+        bw.newLine();
+        bw.write("e-mail ID :- "+customeremail);
+        bw.newLine();
+        bw.write("------------------------------------------------------------------------------------------------");
+        bw.newLine();
+        bw.write("--------------------MEDICINE DETAILS--------------------------");
+        bw.newLine();
+
         while (!purchasedMedicines.isEmpty()) {
             Medicine med = purchasedMedicines.pop(); // Retrieves and removes the top of the stack
             double cost = med.getQuantity() * med.getPrice();
@@ -326,10 +367,23 @@ public class PharmacyManagementSystem {
             System.out.println("Quantity: " + med.getQuantity());
             System.out.println("Price per unit: " + med.getPrice());
             System.out.println("Cost: " + cost);
-            System.out.println("----------------------------");
-        }
+            System.out.println("----------------------------------------------------");
+
+            bw.write("Medicine: " + med.getMed_name() + "\n");
+            bw.write("Quantity: " + med.getQuantity() + "\n");
+            bw.write("Price per unit: " + med.getPrice() + "\n");
+            bw.write("Cost: " + cost + "\n");
+            bw.write("------------------------------------------------\n");
+        
+
+        bw.write("Total Amount: " + totalAmount + "\n");
+        bw.write("-------------------------Thank You VIsit Again-----------------------------\n");
+        bw.close();
+        fw.close();
+
         System.out.println("Total Amount: " + totalAmount);
-        System.out.println("----------------------------");
+        System.out.println("------------------------------------------------------");
+        }
     }
     
 }
