@@ -324,9 +324,10 @@ public class PharmacyManagementSystem {
         String customername = sc.next();
 
         String customerphoneNumber = "";
+        sc.nextLine();
         while (true) {
             System.out.println("Enter the 10-digit phone number of the customer:");
-            customerphoneNumber = sc.next();
+            customerphoneNumber = sc.nextLine();
             if (customerphoneNumber.length() == 10) {
                 break;
             } else {
@@ -335,7 +336,7 @@ public class PharmacyManagementSystem {
         }
 
         System.out.println("Enter the email of the customer:");
-        String customeremail = sc.nextLine();
+        String customeremail = sc.next();
 
         if (purchasedMedicines.isEmpty()) {
             System.out.println("No medicines purchased");
@@ -377,7 +378,11 @@ public class PharmacyManagementSystem {
         
 
         bw.write("Total Amount: " + totalAmount + "\n");
-        bw.write("-------------------------Thank You VIsit Again-----------------------------\n");
+        bw.write("-------------------------Thank You Visit Again-----------------------------\n");
+        bw.write("-------------------");
+        bw.write("-------------------");
+        bw.write("-------------------");
+        // bw.write("-------------------");
         bw.close();
         fw.close();
 
