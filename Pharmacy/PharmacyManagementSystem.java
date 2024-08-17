@@ -279,6 +279,8 @@ public class PharmacyManagementSystem {
     static StackDataStructure purchasedMedicines = new StackDataStructure(100);
 
     static void buyMedicine() throws Exception {
+        // System.out.println("Enter how many medicines you want to buy");
+
         sc.nextLine(); // Clear the scanner buffer
         System.out.println("Enter the ID of the medicine to buy:");
         int id = sc.nextInt();
@@ -379,9 +381,9 @@ public class PharmacyManagementSystem {
 
         bw.write("Total Amount: " + totalAmount + "\n");
         bw.write("-------------------------Thank You Visit Again-----------------------------\n");
-        bw.write("-------------------");
-        bw.write("-------------------");
-        bw.write("-------------------");
+        bw.write("-------------------\n");
+        bw.write("-------------------\n");
+        bw.write("-------------------\n");
         // bw.write("-------------------");
         bw.close();
         fw.close();
@@ -390,5 +392,4 @@ public class PharmacyManagementSystem {
         System.out.println("------------------------------------------------------");
         }
     }
-    
 }
