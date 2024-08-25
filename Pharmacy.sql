@@ -1,14 +1,14 @@
 CREATE TABLE pharmacy (
-  sr_no INT NOT NULL AUTO_INCREMENT, -- Serial number, primary key
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, -- Serial number, primary key
   name VARCHAR(30) DEFAULT NULL, -- Name of the medication
   category VARCHAR(20) DEFAULT NULL, -- Category of the medication
   exp_date DATE DEFAULT NULL, -- Expiry date of the medication
   quantity INT DEFAULT NULL, -- Quantity in stock
-  price DECIMAL(10,2) DEFAULT NULL, -- Price per unit
-  PRIMARY KEY (sr_no) -- Set primary key here
+  price DOUBLE DEFAULT NULL -- Price per unit
 );
 
-INSERT INTO pharmacy(sr_no, name, category, exp_date, quantity, price) VALUES
+
+INSERT INTO pharmacy(id, name, category, exp_date, quantity, price) VALUES
 (1, 'Aspirin', 'Painkiller', '2025-01-15', 50, 5.00),
 (2, 'Ibuprofen', 'Painkiller', '2024-12-20', 100, 8.50),
 (3, 'Amoxicillin', 'Antibiotic', '2025-06-25', 200, 12.00),
@@ -110,3 +110,16 @@ INSERT INTO pharmacy(sr_no, name, category, exp_date, quantity, price) VALUES
 (99, 'Silodosin', 'Prostate', '2024-10-05', 285, 42.00),
 (100, 'Dutasteride', 'Prostate', '2025-01-30', 295, 45.00);
 
+
+CREATE TABLE history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cust_name VARCHAR(50),
+    cust_phone VARCHAR(50),
+    cust_email VARCHAR(50),
+    medicine_name VARCHAR(100),
+    quantity varchar(80),
+    price_per_unit varchar(50),
+    cost_per_medicine varchar(60),  
+    Total_amount DOUBLE,
+    purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -40,7 +40,7 @@ public class PharmacyManagementSystem {
             System.out.println("6.=>To Update Expiry Date");
             System.out.println("7.=>To Search Medicine");
             System.out.println("8.=>To Buy Medicines  ---- && To generate Bill");
-            // System.out.println("9.=>To Generate Bill");
+
             System.out.println("0.=><====To Exit====>");
             System.out.println("----------------------------------------------------------------");
             choice = sc.nextInt();
@@ -69,7 +69,6 @@ public class PharmacyManagementSystem {
                 case 8:
                     buyMedicine();
                     
-                    // generatebill();
                     break;
                 case 0:
                     return;
@@ -85,7 +84,7 @@ public class PharmacyManagementSystem {
         PreparedStatement pst = con.prepareStatement(s);
         ResultSet rs = pst.executeQuery();
         while (rs.next()) {
-            int id = rs.getInt("sr_no");
+            int id = rs.getInt("id");
             String name = rs.getString("name");
             String category = rs.getString("category");
             String expDate = rs.getString("exp_date");
@@ -145,7 +144,7 @@ public class PharmacyManagementSystem {
         int id = sc.nextInt();
 
         if (medicineMap.containsKey(id)) {
-            String sql = "delete from pharmacy where sr_no = ?";
+            String sql = "delete from pharmacy where id = ?";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setInt(1, id);
             pst.executeUpdate();
@@ -183,7 +182,7 @@ public class PharmacyManagementSystem {
             System.out.println("Enter the new price:");
             double price = sc.nextDouble();
 
-            String sql = "update pharmacy set price = ? where sr_no = ?";
+            String sql = "{call updatePrice(?,?)}";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setDouble(1, price);
             pst.setInt(2, id);
@@ -207,7 +206,7 @@ public class PharmacyManagementSystem {
             System.out.println("Enter the new quantity:");
             int quantity = sc.nextInt();
 
-            String sql = "update pharmacy set quantity = ? where sr_no = ?";
+            String sql = "{call updateQuantity(?,?)}";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setInt(1, quantity);
             pst.setInt(2, id);
@@ -237,7 +236,7 @@ public class PharmacyManagementSystem {
             System.out.println("Enter the date in '01' or '20' form");
             int day = sc.nextInt();
 
-            String sql = "update pharmacy set exp_date = ? where sr_no = ?";
+            String sql = "{call updateExp_Date(?,?)}";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setString(1, year + "-" + month + "-" + day);
             pst.setInt(2, id);
@@ -275,62 +274,72 @@ public class PharmacyManagementSystem {
             } while (rs.next());
         }
     }
-
+// --------------------------------------------------------------=============================================
+    
     static StackDataStructure purchasedMedicines = new StackDataStructure(100);
 
     static void buyMedicine() throws Exception {
-        // System.out.println("Enter how many medicines you want to buy");
+        while (true) {
+            sc.nextLine(); // For flushing Enter
+            System.out.println("Enter the ID of the medicine to buy:");
+            int id = sc.nextInt();
 
-        sc.nextLine(); // Clear the scanner buffer
-        System.out.println("Enter the ID of the medicine to buy:");
-        int id = sc.nextInt();
+            if (medicineMap.containsKey(id)) {
+                Medicine medicine = medicineMap.get(id);
 
-        if (medicineMap.containsKey(id)) {
-            Medicine medicine = medicineMap.get(id);
+                System.out.println("Enter quantity to buy:");
+                int buyQuantity = sc.nextInt();
 
-            System.out.println("Enter quantity to buy:");
-            int buyQuantity = sc.nextInt();
+                if (buyQuantity <= medicine.getQuantity()) {
+                    // Update the quantity in the database
+                    int newQuantity = medicine.getQuantity() - buyQuantity;
+                    String sql = "UPDATE pharmacy SET quantity = ? WHERE id = ?";
+                    PreparedStatement pst = con.prepareStatement(sql);
+                    pst.setInt(1, newQuantity);
+                    pst.setInt(2, id);
+                    pst.executeUpdate();
 
-            if (buyQuantity <= medicine.getQuantity()) {
-                // Update the quantity in the database
-                int newQuantity = medicine.getQuantity() - buyQuantity;
-                String sql = "update pharmacy set quantity = ? where sr_no = ?";
-                PreparedStatement pst = con.prepareStatement(sql);
-                pst.setInt(1, newQuantity);
-                pst.setInt(2, id);
-                pst.executeUpdate();
+                    // Update the quantity in the HashMap
+                    medicine.setQuantity(newQuantity);
 
-                // Update the quantity in the HashMap
-                medicine.setQuantity(newQuantity);
+                    // Add the purchased medicine to the stack for billing
+                    Medicine purchasedMed = new Medicine(medicine.getMed_name(), medicine.getCategory(), medicine.getExp_date(), buyQuantity, medicine.getPrice());
+                    purchasedMedicines.push(purchasedMed);
 
-                // Add the purchased medicine to the stack for billing
-                Medicine purchasedMed = new Medicine(medicine.getMed_name(), medicine.getCategory(), medicine.getExp_date(), buyQuantity, medicine.getPrice());
-                purchasedMedicines.push(purchasedMed);
+                    System.out.println("Medicine added to your purchase stack.");
+                    System.out.println("-------------------------------------------------------------");
 
-                System.out.println("Medicine purchased successfully");
-                System.out.println("-------------------------------------------------------------");
-                generatebill();
+                } else {
+                    System.out.println("Insufficient stock. Available quantity: " + medicine.getQuantity());
+                }
             } else {
-                System.out.println("Insufficient stock. Available quantity: " + medicine.getQuantity());
+                System.out.println("Medicine with ID " + id + " not found");
             }
-        } else {
-            System.out.println("Medicine with ID " + id + " not found");
+
+            System.out.println("Do you want to buy another medicine?");
+            System.out.println("Type (YES) <-- OR --> (NO)");
+            String choice = sc.next();
+            if (!choice.equalsIgnoreCase("yes")) {
+                break;
+            }
         }
+
+        // Automatically prompt for bill generation after buying medicines
+        generateBill();
     }
 
-
-    static void generatebill()throws IOException {
-        System.out.println("--------------Billling Centerr----------------");
+    static void generateBill() throws IOException,SQLException {
+        System.out.println("--------------Billing Center----------------");
         sc.nextLine();
-        System.out.println("Enter Name of the Customer");
-        String customername = sc.next();
+        System.out.println("Enter Name of the Customer:");
+        String customerName = sc.next();
 
-        String customerphoneNumber = "";
+        String customerPhoneNumber = "";
         sc.nextLine();
         while (true) {
             System.out.println("Enter the 10-digit phone number of the customer:");
-            customerphoneNumber = sc.nextLine();
-            if (customerphoneNumber.length() == 10) {
+            customerPhoneNumber = sc.nextLine();
+            if (customerPhoneNumber.length() == 10) {
                 break;
             } else {
                 System.out.println("Invalid phone number. Please enter a 10-digit number.");
@@ -338,34 +347,40 @@ public class PharmacyManagementSystem {
         }
 
         System.out.println("Enter the email of the customer:");
-        String customeremail = sc.next();
+        String customerEmail = sc.next();
 
         if (purchasedMedicines.isEmpty()) {
-            System.out.println("No medicines purchased");
+            System.out.println("No medicines purchased.");
             return;
         }
-    
-        double totalAmount = 0;
-        System.out.println("--------------------- Bill Generation--------------------------");
 
-        File f=new File(customername+ ".txt");
-        FileWriter fw = new FileWriter(f,true);
-        BufferedWriter bw=new BufferedWriter(fw);
-        bw.write("Name:- "+customername);
+        double totalAmount = 0;
+        System.out.println("--------------------- Bill Generation --------------------------");
+
+        File f = new File(customerName + ".txt");
+        FileWriter fw = new FileWriter(f, true);
+        BufferedWriter bw = new BufferedWriter(fw);
+        bw.write("Name: " + customerName);
         bw.newLine();
-        bw.write("phone no. :- "+customerphoneNumber);
+        bw.write("Phone no.: " + customerPhoneNumber);
         bw.newLine();
-        bw.write("e-mail ID :- "+customeremail);
+        bw.write("Email ID: " + customerEmail);
         bw.newLine();
-        bw.write("------------------------------------------------------------------------------------------------");
+        bw.write("---------------------------------------------------------------");
         bw.newLine();
-        bw.write("--------------------MEDICINE DETAILS--------------------------");
+        bw.write("--------------------MEDICINE DETAILS---------------------------");
         bw.newLine();
+
+        String ConcatName = "";
+        String ConcatQuantity = "";
+        String ConcatPriceperunit = "";
+        String Concatcost = "";
 
         while (!purchasedMedicines.isEmpty()) {
             Medicine med = purchasedMedicines.pop(); // Retrieves and removes the top of the stack
             double cost = med.getQuantity() * med.getPrice();
             totalAmount += cost;
+
             System.out.println("Medicine: " + med.getMed_name());
             System.out.println("Quantity: " + med.getQuantity());
             System.out.println("Price per unit: " + med.getPrice());
@@ -377,19 +392,45 @@ public class PharmacyManagementSystem {
             bw.write("Price per unit: " + med.getPrice() + "\n");
             bw.write("Cost: " + cost + "\n");
             bw.write("------------------------------------------------\n");
+
+            ConcatName += med.getMed_name()+ ",";
+            ConcatQuantity += med.getQuantity() +",";
+            ConcatPriceperunit += med.getPrice() + ",";
+            Concatcost += cost + ",";
+            
+        }
+        String Concat_med_name = ConcatName.substring(0, ConcatName.length()-1);
+        String Concat_Quantity = ConcatQuantity.substring(0,ConcatQuantity.length()-1);
+        String Concat_Price_per_unit = ConcatPriceperunit.substring(0,ConcatPriceperunit.length()-1);
+        String Concat_cost = Concatcost.substring(0,Concatcost.length()-1);
+        
+
+            String sql = "INSERT INTO history (cust_name, cust_phone, cust_email, medicine_name, quantity, price_per_unit, cost_per_medicine,Total_amount) VALUES (?, ?, ?, ?, ?, ?,?,?)";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, customerName);
+            pst.setString(2, customerPhoneNumber);
+            pst.setString(3, customerEmail);
+            
+            // pst.setString(4, med.getMed_name());
+            // pst.setInt(5, med.getQuantity());
+            // pst.setDouble(6, med.getPrice());
+            // pst.setDouble(7, cost);
+
+            pst.setString(4, Concat_med_name);
+            pst.setString(5, Concat_Quantity);
+            pst.setString(6, Concat_Price_per_unit);
+            pst.setString(7, Concat_cost);
+            pst.setDouble(8, totalAmount);
+            
+            pst.executeUpdate();
         
 
         bw.write("Total Amount: " + totalAmount + "\n");
-        bw.write("-------------------------Thank You Visit Again-----------------------------\n");
-        bw.write("-------------------\n");
-        bw.write("-------------------\n");
-        bw.write("-------------------\n");
-        // bw.write("-------------------");
+        bw.write("------------------------- Thank You, Visit Again -----------------------------\n");
         bw.close();
         fw.close();
 
         System.out.println("Total Amount: " + totalAmount);
         System.out.println("------------------------------------------------------");
-        }
     }
 }
